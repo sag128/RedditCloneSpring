@@ -161,11 +161,15 @@ public class AuthService {
 		if(updateUserDto.getPassword()!=null)
 		{
 			user.setPassword(passwordEncoder.encode(updateUserDto.getPassword()));
+			userRepository.save(user);
+
 		}
 
 		if(updateUserDto.getUsername()!=null)
 		{
 			user.setUsername(updateUserDto.getUsername());
+			userRepository.save(user);
+
 		}
 
 		return "User updated successfully";

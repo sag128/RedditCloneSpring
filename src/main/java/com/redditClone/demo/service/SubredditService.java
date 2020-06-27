@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,12 +25,21 @@ public class SubredditService {
     private  final  AuthService authService;
 
     @Transactional
-    public SubredditDto save(SubredditDto subredditDto)
-    {
+    public Object save(SubredditDto subredditDto) {
 
-        Subreddit save = subredditRepository.save((subredditMapper.mapDtoToSubreddit(subredditDto,authService.getCurrentUser())));
-        subredditDto.setId(save.getId());
-        return subredditDto;
+        Subreddit find = subredditRepository.findByName(subredditDto.getName());
+
+        if (find == null) {
+            log.info("Null");
+            Subreddit save = subredditRepository.save((subredditMapper.mapDtoToSubreddit(subredditDto, authService.getCurrentUser())));
+            subredditDto.setId(save.getId());
+            return subredditDto;
+        }
+        else
+        {
+            log.info(find.toString());
+            return "Subreddit with this name already exists";
+        }
     }
 
 

@@ -18,6 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.util.List.*;
 
 @Service
 @AllArgsConstructor
@@ -32,13 +35,32 @@ public class PostService {
 
 
     @Transactional
-    public  void save (PostRequest postRequest)
-    {
-        Subreddit subreddit = subredditRepository.findByName(postRequest.getSubredditName())
-                .orElseThrow(() -> new SpringRedditException("SUbreddit not found with name "+postRequest.getSubredditName()));
+    public  Object save (PostRequest postRequest) {
+        Subreddit subreddit = subredditRepository.findByName(postRequest.getSubredditName());
 
-        postRepository.save(postMapper.map(postRequest,subreddit,authService.getCurrentUser()));
-    }
+        if (subreddit != null) {
+            List<Post> posts = postRepository.findAllBySubreddit(subreddit);
+            log.info(posts.toString());
+           List duplicate = posts.stream().filter(pn->pn.getPostName().toLowerCase().equalsIgnoreCase(postRequest.getPostName().toLowerCase())).map(postName->postName.getPostName()).collect(Collectors.toList());
+            if(duplicate.size()>=1)
+            {
+                log.info("Post with similar name already exists in subreddit "+subreddit.getName());
+                return "Post with similar name already exists in subreddit "+subreddit.getName();
+            }
+            if(duplicate.size()==0)
+            {
+                postRepository.save(postMapper.map(postRequest, subreddit, authService.getCurrentUser()));
+            }
+        }
+        if(subreddit==null)
+        {
+            log.info("Subreddit with name "+postRequest.getSubredditName()+" does not exit");
+            return "Subreddit with name "+postRequest.getSubredditName()+" does not exit";
+        }
+
+        return "Post updated";
+        }
+
 
     @Transactional(readOnly = true)
     public PostResponse getById(Long id)
