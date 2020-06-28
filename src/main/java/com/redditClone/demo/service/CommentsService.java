@@ -2,6 +2,7 @@ package com.redditClone.demo.service;
 
 
 import com.redditClone.demo.dto.CommentsDto;
+import com.redditClone.demo.dto.UpdateCommentDto;
 import com.redditClone.demo.exception.SpringRedditException;
 import com.redditClone.demo.mapper.CommentsMapper;
 import com.redditClone.demo.model.Comment;
@@ -74,5 +75,20 @@ public class CommentsService {
     public List<CommentsDto> getByUsername(String username) {
         User user = userRepository.findByUsername(username).orElseThrow(()-> new SpringRedditException("No username found with username "+username));
         return commentRepository.findByUser(user).stream().map(commentsMapper::mapToDto).collect(Collectors.toList());
+    }
+
+    public String updateComment(Long id, UpdateCommentDto updateCommentDto)
+    {
+        User user = authService.getCurrentUser();
+        Comment comment = commentRepository.findById(id).orElseThrow(()->new SpringRedditException("Comment wtih id "+id+" not found"));
+        log.info(comment.toString());
+        log.info(updateCommentDto.getText());
+        if(comment!=null && updateCommentDto.getText()!=null && comment.getUser().getUserId().equals(user.getUserId()) )
+        {
+            comment.setText(updateCommentDto.getText());
+            commentRepository.save(comment);
+            return "Comment updated";
+        }
+        return "Error updating comment";
     }
 }

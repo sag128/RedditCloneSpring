@@ -11,6 +11,7 @@ import com.redditClone.demo.model.User;
 import com.redditClone.demo.repository.PostRepository;
 import com.redditClone.demo.repository.SubredditRepository;
 import com.redditClone.demo.repository.UserRepository;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,9 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static java.util.List.*;
 
 @Service
 @AllArgsConstructor
@@ -35,21 +33,23 @@ public class PostService {
 
 
     @Transactional
-    public  Object save (PostRequest postRequest) {
+    public  String save (PostRequest postRequest) {
         Subreddit subreddit = subredditRepository.findByName(postRequest.getSubredditName());
 
         if (subreddit != null) {
             List<Post> posts = postRepository.findAllBySubreddit(subreddit);
+            Integer duplicate = getSizeOfDuplicatePostsBySubreddit(posts,postRequest.getPostName());
+
             log.info(posts.toString());
-           List duplicate = posts.stream().filter(pn->pn.getPostName().toLowerCase().equalsIgnoreCase(postRequest.getPostName().toLowerCase())).map(postName->postName.getPostName()).collect(Collectors.toList());
-            if(duplicate.size()>=1)
+            if(duplicate>=1)
             {
                 log.info("Post with similar name already exists in subreddit "+subreddit.getName());
                 return "Post with similar name already exists in subreddit "+subreddit.getName();
             }
-            if(duplicate.size()==0)
+            if(duplicate==0)
             {
                 postRepository.save(postMapper.map(postRequest, subreddit, authService.getCurrentUser()));
+                return "Post inserted";
             }
         }
         if(subreddit==null)
@@ -59,6 +59,12 @@ public class PostService {
         }
 
         return "Post updated";
+        }
+
+        public int getSizeOfDuplicatePostsBySubreddit(List<Post> posts, String  postNameToBeChecked)
+        {
+            return posts.stream().filter(pn->pn.getPostName().toLowerCase().equalsIgnoreCase(postNameToBeChecked.toLowerCase())).map(postName->postName.getPostName()).collect(Collectors.toList()).size();
+
         }
 
 
@@ -105,5 +111,71 @@ public class PostService {
 
 
     }
+
+    @Transactional
+    public String updatePostById(PostRequest postRequest, Long id) {
+        Post post = postRepository.findById(id).orElseThrow(() -> new SpringRedditException("No post with id " + id));
+        User user = authService.getCurrentUser();
+
+        Boolean login = user.getUserId().equals(post.getUser().getUserId());
+
+        if (login) {
+
+            if (post.getSubreddit().getName().toLowerCase().equalsIgnoreCase(postRequest.getSubredditName())) // the creater of the post cannot change the subreddit
+            {
+
+                Subreddit subreddit = subredditRepository.findByName(postRequest.getSubredditName());
+                if (subreddit != null) {
+
+                    List<Post> posts = postRepository.findAllBySubreddit(subreddit);
+                    Integer duplicate = getSizeOfDuplicatePostsBySubreddit(posts, postRequest.getPostName());
+
+                    log.info(posts.toString());
+                    if (duplicate >= 1) {
+
+                        log.info("Post with similar name already exists in subreddit " + subreddit.getName());
+                        return "Post with similar name already exists in subreddit " + subreddit.getName();
+                    }
+
+                    if (duplicate == 0 && login) {
+                        if (!post.getPostName().toLowerCase().equalsIgnoreCase(postRequest.getPostName().toLowerCase())) {
+                            // in front end disable the save button if the user deletes and enters the same name
+                            post.setPostName(postRequest.getPostName());
+                            postRepository.save(post);
+                            log.info("Post updated");
+                        }
+                        if (postRequest.getUrl() != null) {
+                            post.setUrl(postRequest.getUrl());
+                            postRepository.save(post);
+                        }
+                        if (postRequest.getDescription() != null) {
+                            post.setDescription(postRequest.getDescription());
+                            postRepository.save(post);
+                        }
+
+                    }
+
+
+                }
+                if (subreddit == null) {
+                    log.info("Subreddit with name " + postRequest.getSubredditName() + " does not exit");
+                    return "Subreddit with name " + postRequest.getSubredditName() + " does not exit";
+                }
+
+
+                return "Post updated";
+            }
+            else {
+
+                return "You Cannot change subreddit";
+            }
+        }
+        else
+            {
+            return "Wrong user";
+        }
+    }
+
+
 
 }

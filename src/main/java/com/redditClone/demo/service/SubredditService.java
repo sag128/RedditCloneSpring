@@ -2,9 +2,11 @@ package com.redditClone.demo.service;
 
 
 import com.redditClone.demo.dto.SubredditDto;
+import com.redditClone.demo.dto.SubredditUpdateDto;
 import com.redditClone.demo.exception.SpringRedditException;
 import com.redditClone.demo.mapper.SubredditMapper;
 import com.redditClone.demo.model.Subreddit;
+import com.redditClone.demo.model.User;
 import com.redditClone.demo.repository.SubredditRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -64,5 +65,41 @@ public class SubredditService {
         return subredditMapper.mapSubredditToDto(subreddit);
 
 
+    }
+
+    public String updateSubreddit(Long id, SubredditUpdateDto subredditUpdateDto)
+    {
+        Subreddit subreddit = subredditRepository.findById(id).orElseThrow(()-> new SpringRedditException("No subreddit found with id "+id));
+        User user = authService.getCurrentUser();
+        Boolean login = user.getUserId().equals(subreddit.getUser().getUserId());
+        if(login)
+        {
+            if (subredditRepository.findByName(subredditUpdateDto.getSubredditName()) == null)
+            // in front end disable the save button if the user deletes and enters the same name
+
+            {
+                if (!subreddit.getName().toLowerCase().equalsIgnoreCase(subredditUpdateDto.getSubredditName().toLowerCase())) {
+                    subreddit.setName(subredditUpdateDto.getSubredditName());
+                    subredditRepository.save(subreddit);
+                }
+
+                if (!subreddit.getDescription().toLowerCase().equalsIgnoreCase(subredditUpdateDto.getDescription().toLowerCase())) {
+                    subreddit.setDescription(subredditUpdateDto.getDescription());
+                    subredditRepository.save(subreddit);
+                }
+            }
+            else
+            {
+                return "Subreddit with name "+subredditUpdateDto.getSubredditName()+" exists";
+
+            }
+        }
+        else
+        {
+            return "Wrong user";
+        }
+
+
+        return "Subreddit Updated";
     }
 }

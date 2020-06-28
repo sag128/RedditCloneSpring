@@ -23,8 +23,8 @@ public class PostController {
     @PostMapping
     public ResponseEntity<String> createPost(@RequestBody PostRequest postRequest)
     {
-        postService.save(postRequest);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(postService.save(postRequest));
     }
 
     @GetMapping
@@ -49,6 +49,12 @@ public class PostController {
     public ResponseEntity<List<PostResponse>> getByUsername( @PathVariable  String name)
     {
         return ResponseEntity.status(HttpStatus.OK).body(postService.getAllPostsByUsername(name));
+    }
+
+    @PutMapping("/updatePostById/{id}")
+    public ResponseEntity<String> updatePost(@RequestBody PostRequest postRequest, @PathVariable Long id)
+    {
+        return ResponseEntity.status(HttpStatus.OK).body(postService.updatePostById(postRequest,id));
     }
 
 

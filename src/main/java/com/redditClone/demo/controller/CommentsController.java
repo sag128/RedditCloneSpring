@@ -2,6 +2,7 @@ package com.redditClone.demo.controller;
 
 
 import com.redditClone.demo.dto.CommentsDto;
+import com.redditClone.demo.dto.UpdateCommentDto;
 import com.redditClone.demo.service.CommentsService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -48,6 +49,12 @@ public class CommentsController {
     public ResponseEntity<List<CommentsDto>> getByUsername(@PathVariable String username)
     {
        return ResponseEntity.status(HttpStatus.OK).body(commentsService.getByUsername(username));
+    }
+
+    @PutMapping("/updateById/{id}")
+    public ResponseEntity<String> updateComment(@PathVariable Long id,@RequestBody UpdateCommentDto updateCommentDto)
+    {
+        return ResponseEntity.status(HttpStatus.OK).body(commentsService.updateComment(id,updateCommentDto));
     }
 
 

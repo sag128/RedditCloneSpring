@@ -1,6 +1,7 @@
 package com.redditClone.demo.controller;
 
 import com.redditClone.demo.dto.SubredditDto;
+import com.redditClone.demo.dto.SubredditUpdateDto;
 import com.redditClone.demo.service.SubredditService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +38,13 @@ public class SubredditController {
     public ResponseEntity<SubredditDto> getSubreddit(@PathVariable Long id)
     {
         return ResponseEntity.status(HttpStatus.OK).body(subredditService.getSubreddit(id));
+    }
+
+
+    @PutMapping("/updateById/{id}")
+    public ResponseEntity<String> updateSubredditById(@PathVariable Long id, @RequestBody SubredditUpdateDto subredditUpdateDto)
+    {
+        return ResponseEntity.status(HttpStatus.OK).body(subredditService.updateSubreddit(id,subredditUpdateDto));
     }
 
 
