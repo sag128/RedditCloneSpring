@@ -33,24 +33,36 @@ public class VoteService {
     private  final UserRepository userRepository;
     @Transactional
     public void save(VoteDto voteDto) {
+        int notFirst;
         Post post = postRepository.findById(voteDto.getPostId()).orElseThrow(()-> new SpringRedditException("No post with Post id "+voteDto.getPostId()));
 
         Optional<Vote> voteByPostUser = voteRepository.findTopByPostAndUserOrderByVotedDateTimeDesc(post,authService.getCurrentUser());
         // user can upvote or downvote once
 
+
+        if(voteByPostUser.toString().equals("Optional.empty"))
+        {
+            notFirst=1;
+        }
+        else
+        {
+            notFirst=2;
+        }
+
         if(voteByPostUser.isPresent() && voteByPostUser.get().getVoteType().equals(voteDto.getVoteType()))
         {
-            throw new SpringRedditException("You have already "+voteDto.getVoteType()+"d for this post");
+            throw new SpringRedditException("You have already "+voteDto.getVoteType()+"D for this post");
         }
+
 
         //setting post votes if upvoted or downvoted
         if(VoteType.UPVOTE.equals(voteDto.getVoteType()))
         {
-            post.setVoteCount(post.getVoteCount() + 1);
+            post.setVoteCount(post.getVoteCount() + notFirst);
         }
         else
         {
-            post.setVoteCount(post.getVoteCount() - 1);
+            post.setVoteCount(post.getVoteCount() - notFirst);
         }
 
         voteRepository.save(maptToVote(voteDto,post));
