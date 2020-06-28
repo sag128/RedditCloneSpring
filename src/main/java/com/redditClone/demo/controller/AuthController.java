@@ -1,6 +1,7 @@
 package com.redditClone.demo.controller;
 
 import com.redditClone.demo.dto.*;
+import com.redditClone.demo.model.User;
 import com.redditClone.demo.service.RefreshTokenService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +12,7 @@ import com.redditClone.demo.service.AuthService;
 import lombok.AllArgsConstructor;
 
 import javax.validation.Valid;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -60,6 +62,12 @@ public class AuthController {
 	@PutMapping("/changeCurrentUserDetails")
 	public String updateUser (@RequestBody UpdateUserDto updateUserDto) {
 		return authService.updateUser(updateUserDto);
+	}
+
+	@GetMapping
+	public ResponseEntity<List<User>> getAllUsers()
+	{
+		return ResponseEntity.status(HttpStatus.OK).body(authService.getAllUsers());
 	}
 
 

@@ -1,6 +1,7 @@
 package com.redditClone.demo.service;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -175,5 +176,11 @@ public class AuthService {
 		return "User updated successfully";
 
 
+	}
+
+	public List<User> getAllUsers() {
+
+		List<User> user = userRepository.findAll();
+		return user;
 	}
 }
