@@ -9,6 +9,7 @@ import java.util.UUID;
 import com.redditClone.demo.dto.*;
 import com.redditClone.demo.exception.SpringRedditException;
 import com.redditClone.demo.security.JwtProvider;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -46,9 +47,9 @@ public class AuthService {
 	public String signup(RegisterRequest registerRequest)
 	{
 		User user = new User();
-		User email = userRepository.findByEmail(registerRequest.getEmail());
+		Boolean email = userRepository.findByEmail(registerRequest.getEmail()).toString().equals("Optional.empty");
 		Boolean username  = userRepository.findByUsername(registerRequest.getUsername()).toString().equals("Optional.empty");
-		if(email==null)
+		if(email)
         {
         	if(username)
 			{
@@ -168,37 +169,62 @@ public class AuthService {
 
 		User user = getCurrentUser();
 
-		User email = userRepository.findByEmail(updateUserDto.getEmail());
+		Boolean email = userRepository.findByEmail(updateUserDto.getEmail()).toString().equals("Optional.empty");
 		Boolean username  = userRepository.findByUsername(updateUserDto.getUsername()).toString().equals("Optional.empty");
-		if(!user.getEmail().equalsIgnoreCase(updateUserDto.getEmail()) && email==null)
+//		log.info(String.valueOf(email.toString()));
+//		log.info(username.toString());
+//		log.info(String.valueOf(!user.getEmail().equalsIgnoreCase(updateUserDto.getEmail()) && email));
+//		log.info(String.valueOf(updateUserDto.getPassword()!=null && updateUserDto.getPassword().length()>8 && updateUserDto.getPassword().length()<16));
+//		log.info(String.valueOf(updateUserDto.getUsername()!=null && username && !updateUserDto.getUsername().toLowerCase().equals(user.getUsername().toLowerCase())));
+	if(!user.getEmail().equalsIgnoreCase(updateUserDto.getEmail()) && email)
 		{
-			mailService.sendMail(new NotificationEmail("Please Review your Account",
-					user.getEmail(), "You requested for an email id change from, " +user.getEmail()+
-					" to " +updateUserDto.getEmail()+
-					" Please check the new email id for further info"));
+			if(updateUserDto.getPassword()!=null && updateUserDto.getPassword().length()>8 && updateUserDto.getPassword().length()<16)
+			{
+				if(updateUserDto.getUsername()!=null && username && !updateUserDto.getUsername().toLowerCase().equals(user.getUsername().toLowerCase()))
+				{
 
-			user.setEnabled(false);
-			String token = generateVerificationToken(user);
-			mailService.sendMail(new NotificationEmail("Email Id change request",
-					updateUserDto.getEmail(), "Thank you for signing up to Spring Reddit, " +
-					"please click on the below url to activate your account : " +
-					"http://localhost:8080/api/auth/accountVerification/" + token));
-			user.setEmail(updateUserDto.getEmail());
-			userRepository.save(user);
+
+
+					mailService.sendMail(new NotificationEmail("Please Review your Account",
+							user.getEmail(), "You requested for an email id change from, " +user.getEmail()+
+							" to " +updateUserDto.getEmail()+
+							" Please check the new email id for further info"));
+
+					user.setEnabled(false);
+					String token = generateVerificationToken(user);
+					mailService.sendMail(new NotificationEmail("Email Id change request",
+							updateUserDto.getEmail(), "Thank you for signing up to Spring Reddit, " +
+							"please click on the below url to activate your account : " +
+							"http://localhost:8080/api/auth/accountVerification/" + token));
+					user.setEmail(updateUserDto.getEmail());
+
+					user.setPassword(passwordEncoder.encode(updateUserDto.getPassword()));
+					user.setUsername(updateUserDto.getUsername());
+
+					userRepository.save(user);
+
+				}
+				else
+				{
+					return "Username is taken";
+				}
+
+			}
+			else
+			{
+				return "Length of password should be more than 8 and less than 16";
+			}
 		}
-		if(updateUserDto.getPassword()!=null && updateUserDto.getPassword().length()>8 && updateUserDto.getPassword().length()<16)
+		else
 		{
-			user.setPassword(passwordEncoder.encode(updateUserDto.getPassword()));
-			userRepository.save(user);
-
+			return "Email already exists";
 		}
 
-		if(updateUserDto.getUsername()!=null && username && !updateUserDto.getUsername().toLowerCase().equals(user.getUsername().toLowerCase()))
-		{
-			user.setUsername(updateUserDto.getUsername());
-			userRepository.save(user);
 
-		}
+
+
+
+
 
 		return "User updated successfully";
 
