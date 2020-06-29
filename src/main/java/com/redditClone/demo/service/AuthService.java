@@ -43,24 +43,49 @@ public class AuthService {
 	private final RefreshTokenService refreshTokenService;
 
 	@Transactional 
-	public void signup(RegisterRequest registerRequest)
+	public String signup(RegisterRequest registerRequest)
 	{
 		User user = new User();
-		user.setUsername(registerRequest.getUsername());
-		user.setEmail(registerRequest.getEmail());
-		user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-		user.setCreated(Instant.now());
-		user.setEnabled(false);
-	
-		userRepository.save(user);
-		
-		
-		String token = generateVerificationToken(user);
-		 mailService.sendMail(new NotificationEmail("Please Activate your Account",
-	                user.getEmail(), "Thank you for signing up to Spring Reddit, " +
-	                "please click on the below url to activate your account : " +
-	                "http://localhost:8080/api/auth/accountVerification/" + token));
-	}
+		User email = userRepository.findByEmail(registerRequest.getEmail());
+		Boolean username  = userRepository.findByUsername(registerRequest.getUsername()).toString().equals("Optional.empty");
+		if(email==null)
+        {
+        	if(username)
+			{
+				if(registerRequest.getPassword().length()>8 && registerRequest.getPassword().length()<16)
+				{
+					user.setUsername(registerRequest.getUsername());
+
+					user.setEmail(registerRequest.getEmail());
+					user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+					user.setCreated(Instant.now());
+					user.setEnabled(false);
+					String token = generateVerificationToken(user);
+					mailService.sendMail(new NotificationEmail("Please Activate your Account",
+							user.getEmail(), "Thank you for signing up to Spring Reddit, " +
+							"please click on the below url to activate your account : " +
+							"http://localhost:8080/api/auth/accountVerification/" + token));
+
+					userRepository.save(user);
+				}
+				else
+				{
+					return "Password length should be between 8 and 16";
+				}
+			}
+        	else
+			{
+				return "Username already exists";
+			}
+
+        }
+		else
+        {
+            return "Email already exists";
+        }
+
+		return "User registered";
+    }
 
 	private String generateVerificationToken(User user) {
 			String token = UUID.randomUUID().toString();
@@ -143,7 +168,9 @@ public class AuthService {
 
 		User user = getCurrentUser();
 
-		if(!user.getEmail().equalsIgnoreCase(updateUserDto.getEmail()))
+		User email = userRepository.findByEmail(updateUserDto.getEmail());
+		Boolean username  = userRepository.findByUsername(updateUserDto.getUsername()).toString().equals("Optional.empty");
+		if(!user.getEmail().equalsIgnoreCase(updateUserDto.getEmail()) && email==null)
 		{
 			mailService.sendMail(new NotificationEmail("Please Review your Account",
 					user.getEmail(), "You requested for an email id change from, " +user.getEmail()+
@@ -159,14 +186,14 @@ public class AuthService {
 			user.setEmail(updateUserDto.getEmail());
 			userRepository.save(user);
 		}
-		if(updateUserDto.getPassword()!=null)
+		if(updateUserDto.getPassword()!=null && updateUserDto.getPassword().length()>8 && updateUserDto.getPassword().length()<16)
 		{
 			user.setPassword(passwordEncoder.encode(updateUserDto.getPassword()));
 			userRepository.save(user);
 
 		}
 
-		if(updateUserDto.getUsername()!=null)
+		if(updateUserDto.getUsername()!=null && username && !updateUserDto.getUsername().toLowerCase().equals(user.getUsername().toLowerCase()))
 		{
 			user.setUsername(updateUserDto.getUsername());
 			userRepository.save(user);
