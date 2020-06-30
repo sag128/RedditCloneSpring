@@ -220,12 +220,6 @@ public class AuthService {
 			return "Email already exists";
 		}
 
-
-
-
-
-
-
 		return "User updated successfully";
 
 
