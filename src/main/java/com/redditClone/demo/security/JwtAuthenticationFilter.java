@@ -30,22 +30,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        log.info("In here");
+
+        try {
+            String jwt = getJwtFromRequest(request);
+
+            if (jwtProvider.validateToken(jwt) && jwt != null) {
+                String username = jwtProvider.getUsernameFromJwt(jwt);
 
 
-    String jwt =   getJwtFromRequest(request);
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                log.info(username);
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-    if(StringUtils.hasText(jwt) && jwtProvider.validateToken(jwt) && jwt.length()>=10)
-    {
-        String username = jwtProvider.getUsernameFromJwt(jwt);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                filterChain.doFilter(request,response);
 
-
-        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
-
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-    }
-    filterChain.doFilter(request,response);
+            }
+        }catch (Exception e)
+        {
+            log.error("Cannot set user auth");
+        }
 
 
     }
@@ -57,7 +63,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
           return bearerToken.substring(7);
        }
-       return bearerToken;
+       return null;
 
     }
 

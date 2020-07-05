@@ -33,40 +33,38 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		return super.authenticationManagerBean();
 	}
 
+	@Bean
+
+	public JwtAuthenticationFilter authenticationJwtTokenFilter() {
+		return new JwtAuthenticationFilter();
+	}
+
 
 	@Override
-	protected void configure(HttpSecurity http) throws Exception {
-		
-		http.cors().and().csrf().disable().authorizeRequests().antMatchers("/api/auth/**").permitAll()
-				.antMatchers(HttpMethod.GET, "/api/subreddit/")
-				.permitAll()
-				.antMatchers(HttpMethod.GET, "/api/subreddit/**")
-				.permitAll()
-				.antMatchers(HttpMethod.GET, "/api/posts/")
-				.permitAll()
-				.antMatchers(HttpMethod.GET, "/api/posts/**")
-				.permitAll()
-				.antMatchers(HttpMethod.GET, "/api/comments/")
-				.permitAll()
-				.antMatchers(HttpMethod.GET, "/api/comments/**")
-				.permitAll()
+	protected void configure(HttpSecurity httpSecurity) throws Exception {
 
-				.antMatchers(HttpMethod.GET, "/api/votes/**")
-				.permitAll()
-				.antMatchers("/v2/api-docs",
-						"/configuration/ui",
-						"/swagger-resources/**",
-						"/configuration/security",
-						"/swagger-ui.html",
-						"/webjars/**")
-				.permitAll()
-				.anyRequest().authenticated();
-
-
-
-
-		http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-	
+        httpSecurity.cors().and()
+                .csrf().disable()
+                .authorizeRequests()
+                .antMatchers("/api/auth/**")
+                .permitAll()
+                .antMatchers(HttpMethod.GET, "/api/subreddit")
+                .permitAll()
+                .antMatchers(HttpMethod.GET, "/api/posts/")
+                .permitAll()
+                .antMatchers(HttpMethod.GET, "/api/posts/**")
+                .permitAll()
+                .antMatchers("/v2/api-docs",
+                        "/configuration/ui",
+                        "/swagger-resources/**",
+                        "/configuration/security",
+                        "/swagger-ui.html",
+                        "/webjars/**")
+                .permitAll()
+                .anyRequest()
+                .authenticated();
+        httpSecurity.addFilterBefore(authenticationJwtTokenFilter(),
+                UsernamePasswordAuthenticationFilter.class);
 	}
 
 	@Autowired

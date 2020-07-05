@@ -28,6 +28,7 @@ public class SubredditController {
 
     }
 
+
     @GetMapping
     public ResponseEntity<List<SubredditDto>> getAllSubreddits()
     {
