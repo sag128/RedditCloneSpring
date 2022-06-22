@@ -9,7 +9,6 @@ import java.util.UUID;
 import com.redditClone.demo.dto.*;
 import com.redditClone.demo.exception.SpringRedditException;
 import com.redditClone.demo.security.JwtProvider;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;

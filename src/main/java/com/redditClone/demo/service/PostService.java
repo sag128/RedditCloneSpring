@@ -11,7 +11,6 @@ import com.redditClone.demo.model.User;
 import com.redditClone.demo.repository.PostRepository;
 import com.redditClone.demo.repository.SubredditRepository;
 import com.redditClone.demo.repository.UserRepository;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
